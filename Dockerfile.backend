@@ -1,0 +1,17 @@
+FROM golang AS builder
+
+COPY . /app
+
+WORKDIR /app
+
+RUN go mod vendor
+RUN CGO_ENABLED=0 go build -o /backend ./cmd/backend/main.go
+
+
+FROM scratch
+
+COPY --from=builder /backend /
+
+EXPOSE 8888
+
+ENTRYPOINT ["/backend"]
