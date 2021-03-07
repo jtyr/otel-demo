@@ -1,0 +1,97 @@
+---
+
+replicaCount: 1
+
+image:
+  repository: jtyr/otel-demo
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+
+port: &container_port 80
+
+app:
+  listen: 0.0.0.0:80
+  jaeger_endpoint: http://tempo.grafanalabs:14268/api/traces
+
+env:
+  BACKEND_LISTEN: "{{ .Values.app.listen }}"
+  JAEGER_ENDPOINT: "{{ .Values.app.jaeger_endpoint }}"
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+readinessProbe:
+  httpGet:
+    path: /metrics
+    port: *container_port
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+livenessProbe:
+  httpGet:
+    path: /metrics
+    port: *container_port
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+
+service:
+  type: ClusterIP
+  targetPort: *container_port
+  # If empty, Kubernetes will choose one for us
+  port: &clusterPort 80
+  annotations: {}
+
+
+ingress:
+  enabled: false
+  annotations: {}
+  rules:
+    - paths:
+        - serviceName: >-
+            {{ include "this.fullname" . }}
+          servicePort: *clusterPort
+
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
