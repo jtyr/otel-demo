@@ -129,7 +129,7 @@ func main() {
 		http.HandlerFunc(mainHandler),
 		"main-handler")
 
-	http.Handle("/main", otelHandler)
+	http.Handle("/api/main", otelHandler)
 	http.HandleFunc("/metrics", meter.ServeHTTP)
 
 	err := http.ListenAndServe(listen, nil)

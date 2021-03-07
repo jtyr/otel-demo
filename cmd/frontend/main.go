@@ -127,7 +127,7 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 	backendEndpoint := os.Getenv("BACKEND_ENDPOINT")
 
 	if backendEndpoint == "" {
-		backendEndpoint = "http://localhost:8888/main"
+		backendEndpoint = "http://localhost:8888/api/main"
 	}
 
 	// New Tracer
@@ -194,7 +194,7 @@ func main() {
 
 	log.Printf("%s listening on %s\n", strings.Title(serviceName), listen)
 
-	http.HandleFunc("/main", mainHandler)
+	http.HandleFunc("/", mainHandler)
 	http.HandleFunc("/metrics", meter.ServeHTTP)
 
 	err := http.ListenAndServe(listen, nil)

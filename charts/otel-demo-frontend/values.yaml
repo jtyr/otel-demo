@@ -15,7 +15,7 @@ port: &container_port 80
 app:
   listen: 0.0.0.0:80
   jaeger_endpoint: http://tempo.grafanalabs:14268/api/traces
-  backend_url: http://otel-demo-backend/main
+  backend_url: http://otel-demo-backend/api/main
 
 env:
   FRONTEND_LISTEN: "{{ .Values.app.listen }}"
