@@ -4,6 +4,9 @@ metadata:
   name: {{ include "this.fullname" . }}
   labels:
     {{- include "this.labels" . | nindent 4 }}
+    {{- if .Values.service.labels }}{{ "\n" }}
+      {{- toYaml .Values.service.labels | indent 4 }}
+    {{- end }}
   {{- if .Values.service.annotations }}
   annotations:
     {{- tpl (toYaml .Values.service.annotations) . | nindent 4 }}

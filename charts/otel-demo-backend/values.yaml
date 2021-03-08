@@ -76,7 +76,16 @@ service:
   targetPort: *container_port
   # If empty, Kubernetes will choose one for us
   port: &clusterPort 80
+  labels:
+    app: >-
+      {{ include "this.fullname" . }}
   annotations: {}
+
+
+servicemonitor:
+  enabled: true
+  namespace: prometheus
+  release: kps
 
 
 ingress:
