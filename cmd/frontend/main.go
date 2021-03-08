@@ -81,8 +81,9 @@ func initMeter() (*prometheus.Exporter) {
 
 	meter := global.Meter(meterName)
 
-	// Init the metrics
 	ctx := context.Background()
+
+	// Init the metrics
 	reqCounter = metric.Must(meter).NewFloat64Counter(
 		"http_requests_total",
 		metric.WithDescription("Total number of requests"))

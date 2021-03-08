@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"go.opentelemetry.io/otel"
@@ -33,6 +34,7 @@ var (
 		attribute.String("app", appName),
 		attribute.String("svc", serviceName)}
 	reqCounter metric.Float64Counter
+	errCounter metric.Float64Counter
 )
 
 // initTracer creates a new trace provider instance and registers it as global trace provider.
@@ -74,17 +76,28 @@ func initMeter() (*prometheus.Exporter) {
 
 	meter := global.Meter(meterName)
 
+	ctx := context.Background()
+
 	// Init the metrics
 	reqCounter = metric.Must(meter).NewFloat64Counter(
 		"http_requests_total",
 		metric.WithDescription("Total number of requests"))
-	reqCounter.Add(context.Background(), float64(0), commonLabels...)
+	reqCounter.Add(ctx, float64(0), commonLabels...)
+
+	errCounter = metric.Must(meter).NewFloat64Counter(
+		"http_errors_total",
+		metric.WithDescription("Total number of errors"))
+	errCounter.Add(ctx, float64(0), commonLabels...)
 
 	return exporter
 }
 
 func mainHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+
+	// Inject W3C context
+	_, req = otelhttptrace.W3C(ctx, req)
+	otelhttptrace.Inject(ctx, req)
 
 	// Get parameter from the context
 	sId := attribute.Key("session_id")
