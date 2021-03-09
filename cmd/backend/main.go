@@ -112,7 +112,7 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 		trace.WithAttributes(sId.String(sessionId.AsString())))
 
 	log.Printf(
-		"Handler: trace_id: %s; span_id=%s\n",
+		"Handler: trace_id=%s; span_id=%s\n",
 		span.SpanContext().TraceID,
 		span.SpanContext().SpanID)
 	log.Printf("Session ID: %s", sessionId.AsString())

@@ -147,7 +147,7 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 		defer span.End()
 
 		log.Printf(
-			"Handler: trace_id: %s; span_id=%s\n",
+			"Handler: trace_id=%s; span_id=%s\n",
 			span.SpanContext().TraceID,
 			span.SpanContext().SpanID)
 
