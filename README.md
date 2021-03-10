@@ -120,12 +120,23 @@ Install Grafana Tempo:
 
 ```shell
 helm upgrade --create-namespace --namespace grafanalabs --install tempo grafana/tempo
+# Patch tempo to have Jaeger HTTP port available for writes
+kubectl patch sts tempo --type json --patch '[{"op": "add", "path": "/spec/template/spec/containers/0/ports/-", "value": {"containerPort": 14268, "name": "jaeger-http"}}]'
+```
+
+Install Grafana Loki:
+
+```shell
 cat <<END | helm upgrade --create-namespace --namespace grafanalabs --values - --install loki grafana/loki
 tracing:
   jaegerAgentHost: tempo
+ingress:
+  enabled: true
+  hosts:
+    - host: loki.localhost
+      paths:
+        - /
 END
-# Patch tempo to have Jaeger HTTP port available for writes
-kubectl patch sts tempo --type json --patch '[{"op": "add", "path": "/spec/template/spec/containers/0/ports/-", "value": {"containerPort": 14268, "name": "jaeger-http"}}]'
 ```
 
 Install Grafana Promtail:
@@ -155,6 +166,36 @@ Test the app:
 - [Grafana dashboard](http://grafana.localhost/d/otel-demo/otel-demo)
 - [OTEL Demo - frontend](http://otel-demo-frontend.localhost)
 - [OTEL Demo - frontend metrics](http://otel-demo-frontend.localhost/metrics)
+
+Query logs from command line:
+
+```shell
+logcli query -t '{namespace="otel-demo", instance=~"otel-demo-.*"}'
+```
+
+Check and tune error generation of the `backend`:
+
+```shell
+# Query the current value
+kubectl run curl \
+    --image curlimages/curl \
+    --restart=Never \
+    --rm \
+    --tty \
+    --stdin \
+    --command -- \
+    curl http://otel-demo-backend.otel-demo/api/features/errorGenerator
+# Set a new value
+# (-d parameter is a number of miliseconds; 0 = generator disabled)
+kubectl run curl \
+    --image curlimages/curl \
+    --restart=Never \
+    --rm \
+    --tty \
+    --stdin \
+    --command -- \
+    curl -X PUT -d 10 http://otel-demo-backend.otel-demo/api/features/errorGenerator
+```
 
 
 Author
