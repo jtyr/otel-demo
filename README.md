@@ -1,8 +1,8 @@
 OTEL Demo
 =========
 
-This is a demo of how to use Open Telemetry (OTEL) instrumentation for traces
-and metrics.
+This is a demo of how to use [Open Telemetry](https://opentelemetry.io/) (OTEL)
+instrumentation for traces and metrics.
 
 
 Usage
@@ -10,7 +10,8 @@ Usage
 
 ### Docker compose
 
-Run Tempo, Tempo Web UI and the App frontend/backed via Docker Compose:
+Run Grafana Tempo, Grafana Tempo Web UI and the App frontend/backed via Docker
+Compose:
 
 ```shell
 docker-compose up
@@ -19,26 +20,26 @@ docker-compose up
 Query the `main` endpoint:
 
 ```shell
-curl -v localhost:8080/main
+curl http://localhost:8080
 ```
 
 Query the `metrics` endpoint:
 
 ```shell
-curl -v localhost:8080/metrics
-curl -v localhost:8888/metrics
+curl http://localhost:8080/metrics
+curl http://localhost:8888/metrics
 ```
 
 ### Kubernetes
 
-Install local Kubernetes cluster using K3D:
+Install local Kubernetes cluster using [K3D](https://k3d.io):
 
 ```shell
 export KUBECONFIG=~/.kube/kind_test1
 k3d cluster create test1 -p '80:80@loadbalancer' -p '443:443@loadbalancer'
 ```
 
-Add all required Helm repos:
+Add all required [Helm](https://helm.sh) repos:
 
 ```shell
 helm repo add grafana https://grafana.github.io/helm-charts
@@ -47,7 +48,7 @@ helm repo add otel-demo https://jtyr.github.io/otel-demo
 helm repo update
 ```
 
-Install Prometheus Operator Stack:
+Install [Prometheus Operator Stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack):
 
 ```shell
 cat <<END | helm upgrade --create-namespace --namespace prometheus --values - --install kps prometheus-community/kube-prometheus-stack
@@ -67,7 +68,7 @@ grafana:
 END
 ```
 
-Install Grafana:
+Install [Grafana](https://grafana.com/oss/grafana/):
 
 ```shell
 cat <<END | helm upgrade --create-namespace --namespace grafanalabs --values - --install grafana grafana/grafana
@@ -116,7 +117,7 @@ dashboards:
 END
 ```
 
-Install Grafana Tempo:
+Install [Grafana Tempo](https://grafana.com/oss/tempo/):
 
 ```shell
 helm upgrade --create-namespace --namespace grafanalabs --install tempo grafana/tempo
@@ -124,7 +125,7 @@ helm upgrade --create-namespace --namespace grafanalabs --install tempo grafana/
 kubectl patch sts tempo --type json --patch '[{"op": "add", "path": "/spec/template/spec/containers/0/ports/-", "value": {"containerPort": 14268, "name": "jaeger-http"}}]'
 ```
 
-Install Grafana Loki:
+Install [Grafana Loki](https://grafana.com/oss/loki/):
 
 ```shell
 cat <<END | helm upgrade --create-namespace --namespace grafanalabs --values - --install loki grafana/loki
@@ -139,13 +140,14 @@ ingress:
 END
 ```
 
-Install Grafana Promtail:
+Install [Grafana
+Promtail](https://grafana.com/docs/loki/latest/clients/promtail/):
 
 ```shell
 helm upgrade --create-namespace --namespace grafanalabs --install promtail grafana/promtail
 ```
 
-Install Fluent Bit:
+Install [Fluent Bit](https://fluentbit.io):
 
 ```shell
 cat <<END | helm upgrade --create-namespace --namespace grafanalabs --values - --install fluent-bit grafana/fluent-bit
@@ -154,7 +156,7 @@ loki:
 END
 ```
 
-Install OTEL Demo:
+Install [OTEL Demo](https://github.com/jtyr/otel-demo):
 
 ```shell
 helm upgrade --create-namespace --namespace otel-demo --install otel-demo-backend otel-demo/otel-demo-backend
