@@ -115,12 +115,10 @@ func initMeter() (*prometheus.Exporter) {
 		metric.WithDescription("Total number of errors"))
 	errCounter.Add(ctx, float64(0), commonLabels...)
 
-	// Add runtime metrics
-	if err = runtime.Start(
-		runtime.WithMinimumReadMemStatsInterval(time.Second),
-	); err != nil {
+	// Start collecting runtime metrics
+	if err = runtime.Start(); err != nil {
 		level.Error(logger).Log(
-			"msg", "failed to initialize runtime metrics",
+			"msg", "failed to initialize runtime metrics collection",
 			"err", err)
 		os.Exit(1)
 	}
