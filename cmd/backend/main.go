@@ -44,7 +44,6 @@ var (
 	reqCounter metric.Float64Counter
 	errCounter metric.Float64Counter
 	logger log.Logger
-	errorGenerator time.Duration
 	maxResponseDuration time.Duration = 5 * time.Millisecond
 )
 
@@ -53,7 +52,7 @@ func initLogger() {
 	logger = log.NewLogfmtLogger(os.Stderr)
 	logger = log.With(
 		logger,
-		"ts", log.DefaultTimestampUTC,
+		"t", log.DefaultTimestampUTC,
 		"app", appName,
 		"service", serviceName)
 }
@@ -63,7 +62,7 @@ func initTracer() func() {
 	jeagerEndpoint := os.Getenv("JAEGER_ENDPOINT")
 
 	if jeagerEndpoint == "" {
-		jeagerEndpoint = "http://localhost:14268/api/traces"
+		jeagerEndpoint = "http://127.0.0.1:14268/api/traces"
 	}
 
 	// Create and install Jaeger export pipeline.
@@ -137,7 +136,8 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 
 	// Get parameter from the context
 	sId := attribute.Key("session_id")
-	sessionId := baggage.Value(ctx, sId)
+	sessionIdAttr := baggage.Value(ctx, sId)
+	sessionId := sessionIdAttr.AsString()
 
 	// New span
 	span := trace.SpanFromContext(ctx)
@@ -145,7 +145,7 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 	// Add event
 	span.AddEvent(
 		"handling session_id",
-		trace.WithAttributes(sId.String(sessionId.AsString())))
+		trace.WithAttributes(sId.String(sessionId)))
 
 	// Simulate slow response
 	duration := time.Duration(rand.ExpFloat64()) * time.Millisecond
@@ -237,7 +237,7 @@ func main() {
 	listen := os.Getenv("BACKEND_LISTEN")
 
 	if listen == "" {
-		listen = "localhost:8888"
+		listen = "127.0.0.1:8888"
 	}
 
 	level.Info(logger).Log(

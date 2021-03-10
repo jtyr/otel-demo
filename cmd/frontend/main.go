@@ -52,7 +52,7 @@ func initLogger() {
 	logger = log.NewLogfmtLogger(os.Stderr)
 	logger = log.With(
 		logger,
-		"ts", log.DefaultTimestampUTC,
+		"t", log.DefaultTimestampUTC,
 		"app", appName,
 		"service", serviceName)
 }
@@ -62,7 +62,7 @@ func initTracer() func() {
 	jeagerEndpoint := os.Getenv("JAEGER_ENDPOINT")
 
 	if jeagerEndpoint == "" {
-		jeagerEndpoint = "http://localhost:14268/api/traces"
+		jeagerEndpoint = "http://127.0.0.1:14268/api/traces"
 	}
 
 	// Create and install Jaeger export pipeline.
@@ -167,7 +167,7 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 	backendEndpoint := os.Getenv("BACKEND_ENDPOINT")
 
 	if backendEndpoint == "" {
-		backendEndpoint = "http://localhost:8888/api/main"
+		backendEndpoint = "http://127.0.0.1:8888/api/main"
 	}
 
 	// New Tracer
@@ -270,7 +270,7 @@ func main() {
 	listen := os.Getenv("FRONTEND_LISTEN")
 
 	if listen == "" {
-		listen = "localhost:8080"
+		listen = "127.0.0.1:8080"
 	}
 
 	level.Info(logger).Log(
