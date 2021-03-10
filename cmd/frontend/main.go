@@ -89,6 +89,7 @@ func initTracer() func() {
 	return flush
 }
 
+// initMeter creates new Prometheus exporter.
 func initMeter() (*prometheus.Exporter) {
 	exporter, err := prometheus.InstallNewPipeline(prometheus.Config{})
 	if err != nil {
@@ -116,6 +117,7 @@ func initMeter() (*prometheus.Exporter) {
 	return exporter
 }
 
+// mainHandler is the endpoint called by the client.
 func mainHandler(w http.ResponseWriter, req *http.Request) {
 	// Measure duration
 	start := time.Now()
@@ -165,6 +167,7 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 	client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 
 	var body []byte
+	var problem bool
 
 	err = func(ctx context.Context) error {
 		// New span
@@ -180,14 +183,26 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 		duration := time.Since(start)
 
 		if err == nil {
-			body, err = ioutil.ReadAll(res.Body)
-			_ = res.Body.Close()
+			if res.StatusCode < 400 {
+				body, err = ioutil.ReadAll(res.Body)
+				_ = res.Body.Close()
 
-			level.Info(logger).Log(
-				"sessionId", sessionId,
-				"traceID", span.SpanContext().TraceID,
-				"spanID", span.SpanContext().SpanID,
-				"duration", duration)
+				level.Info(logger).Log(
+					"sessionId", sessionId,
+					"traceID", span.SpanContext().TraceID,
+					"spanID", span.SpanContext().SpanID,
+					"duration", duration)
+			} else {
+				level.Warn(logger).Log(
+					"sessionId", sessionId,
+					"traceID", span.SpanContext().TraceID,
+					"spanID", span.SpanContext().SpanID,
+					"duration", duration,
+					"msg", "received wrong status code from the backend",
+					"code", res.StatusCode)
+
+				problem = true
+			}
 		} else {
 			level.Error(logger).Log(
 				"sessionId", sessionId,
@@ -205,12 +220,14 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 
 			// Record error metric
 			errCounter.Add(ctx, float64(1), commonLabels...)
+
+			problem = true
 		}
 
 		return err
 	}(ctx)
 
-	if err != nil {
+	if problem {
 		// HTML output
 		fmt.Fprintf(w, "Hello world from the %s\n", serviceName)
 	} else {

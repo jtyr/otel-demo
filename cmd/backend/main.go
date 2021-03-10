@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -40,6 +42,8 @@ var (
 	reqCounter metric.Float64Counter
 	errCounter metric.Float64Counter
 	logger log.Logger
+	errorGenerator time.Duration
+	maxResponseDuration time.Duration = 5 * time.Millisecond
 )
 
 // initLogger creates new logger used throughout the application.
@@ -113,6 +117,7 @@ func initMeter() (*prometheus.Exporter) {
 	return exporter
 }
 
+// mainHandler is the endpoint called from the Frontend.
 func mainHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
@@ -133,18 +138,70 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 		trace.WithAttributes(sId.String(sessionId.AsString())))
 
 	// Simulate slow response
-	time.Sleep(time.Duration(rand.ExpFloat64()) * time.Millisecond)
+	duration := time.Duration(rand.ExpFloat64()) * time.Millisecond
+	time.Sleep(duration)
 
-	level.Info(logger).Log(
-		"sessionId", sessionId,
-		"traceID", span.SpanContext().TraceID,
-		"spanID", span.SpanContext().SpanID)
+	if maxResponseDuration > 0 * time.Millisecond && duration > maxResponseDuration {
+		// Record error metric
+		errCounter.Add(ctx, float64(1), commonLabels...)
 
-	// Record request metric
-	reqCounter.Add(ctx, float64(1), commonLabels...)
+		level.Error(logger).Log(
+			"sessionId", sessionId,
+			"traceID", span.SpanContext().TraceID,
+			"spanID", span.SpanContext().SpanID,
+			"duration", duration,
+			"msg", "response is taking too long")
 
-	// Send back a message
-	fmt.Fprintf(w, "Hello world from the %s\n", serviceName)
+		// Return 408
+		w.WriteHeader(http.StatusRequestTimeout)
+	} else {
+		level.Info(logger).Log(
+			"sessionId", sessionId,
+			"traceID", span.SpanContext().TraceID,
+			"spanID", span.SpanContext().SpanID,
+			"duration", duration)
+
+		// Record request metric
+		reqCounter.Add(ctx, float64(1), commonLabels...)
+
+		// Send back a message
+		fmt.Fprintf(w, "Hello world from the %s\n", serviceName)
+	}
+}
+
+// errorGeneratorHandler is the endpoint called from the Frontend.
+func errorGeneratorHandler(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	if req.Method == "PUT" {
+		body, err := ioutil.ReadAll(req.Body)
+
+		if err != nil {
+			// Record error metric
+			errCounter.Add(ctx, float64(1), commonLabels...)
+
+			level.Error(logger).Log(
+				"msg", "failed to read request body from errorGeneratorHandler",
+				"err", err)
+		} else {
+			value, cErr := strconv.ParseUint(string(body), 10, 8)
+			if cErr != nil {
+				// Record error metric
+				errCounter.Add(ctx, float64(1), commonLabels...)
+
+				level.Error(logger).Log(
+					"msg", "failed to convert maxResponseDuration value",
+					"err", cErr)
+			} else {
+				maxResponseDuration = time.Duration(value) * time.Millisecond
+
+				level.Warn(logger).Log(
+					"msg", fmt.Sprintf("errorGenerator set to value %d from host %s", value, req.RemoteAddr))
+			}
+		}
+	}
+
+	fmt.Fprintf(w, "maxResponseDuration=%v\n", maxResponseDuration)
 }
 
 func main() {
@@ -176,6 +233,7 @@ func main() {
 		"main-handler")
 
 	http.Handle("/api/main", otelHandler)
+	http.HandleFunc("/api/features/errorGenerator", errorGeneratorHandler)
 	http.HandleFunc("/metrics", meter.ServeHTTP)
 
 	err := http.ListenAndServe(listen, nil)
