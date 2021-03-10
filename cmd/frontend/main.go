@@ -124,23 +124,25 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Add("Content-Type", "text/html")
 
 	// Read cookie
-	sessionId, err := req.Cookie("session_id")
+	var sessionId string
+	session, err := req.Cookie("session_id")
 	if err != nil {
 		// Set cookie if non found
-		sessionId = &http.Cookie{
+		session = &http.Cookie{
 			Name: "session_id",
 			Value: uuid.New().String(),
 		}
 		level.Info(logger).Log(
 			"msg", "new session created",
-			"sessionId", sessionId)
-		http.SetCookie(w, sessionId)
+			"sessionId", session.Value)
+		http.SetCookie(w, session)
 	}
+	sessionId = session.Value
 
 	// Pass the session_id via context
 	ctx := baggage.ContextWithValues(
 		req.Context(),
-		attribute.String("session_id", sessionId.Value))
+		attribute.String("session_id", sessionId))
 
 	// Inject W3C context
 	_, req = otelhttptrace.W3C(ctx, req)
@@ -173,14 +175,28 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 
 		ctx = httptrace.WithClientTrace(ctx, otelhttptrace.NewClientTrace(ctx))
 		req, _ := http.NewRequestWithContext(ctx, "GET", backendEndpoint, nil)
-
 		res, err := client.Do(req)
+
+		duration := time.Since(start)
 
 		if err == nil {
 			body, err = ioutil.ReadAll(res.Body)
 			_ = res.Body.Close()
 
+			level.Info(logger).Log(
+				"sessionId", sessionId,
+				"traceID", span.SpanContext().TraceID,
+				"spanID", span.SpanContext().SpanID,
+				"duration", duration)
 		} else {
+			level.Error(logger).Log(
+				"sessionId", sessionId,
+				"traceID", span.SpanContext().TraceID,
+				"spanID", span.SpanContext().SpanID,
+				"duration", duration,
+				"msg", "backend connection error",
+				"err", err)
+
 			// Show error in the span
 			span.AddEvent(
 				"backend connection error",
@@ -191,23 +207,10 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 			errCounter.Add(ctx, float64(1), commonLabels...)
 		}
 
-		duration := time.Since(start)
-
-		level.Info(logger).Log(
-			"sessionId", sessionId.Value,
-			"traceID", span.SpanContext().TraceID,
-			"spanID", span.SpanContext().SpanID,
-			"duration", duration)
-
 		return err
 	}(ctx)
 
 	if err != nil {
-		level.Error(logger).Log(
-			"sessionId", sessionId.Value,
-			"msg", "cannot connect to the backend",
-			"err", err)
-
 		// HTML output
 		fmt.Fprintf(w, "Hello world from the %s\n", serviceName)
 	} else {
