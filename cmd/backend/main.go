@@ -16,6 +16,7 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/baggage"
@@ -113,6 +114,16 @@ func initMeter() (*prometheus.Exporter) {
 		"http_errors_total",
 		metric.WithDescription("Total number of errors"))
 	errCounter.Add(ctx, float64(0), commonLabels...)
+
+	// Add runtime metrics
+	if err = runtime.Start(
+		runtime.WithMinimumReadMemStatsInterval(time.Second),
+	); err != nil {
+		level.Error(logger).Log(
+			"msg", "failed to initialize runtime metrics",
+			"err", err)
+		os.Exit(1)
+	}
 
 	return exporter
 }

@@ -373,6 +373,8 @@ go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.
 go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.18.0/go.mod h1:iK1G0FgHurSJ/aYLg5LpnPI0pqdanM73S3dhyDp0Lk4=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.18.0 h1:VbYXJBtSTHjzNc4gHVD3tkg7xfb6UpCf7DWjF0QlSy4=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.18.0/go.mod h1:yZmHqsWTuj4VkXk9JuAs1nRw502/7LPK+QfVEHXtUts=
+go.opentelemetry.io/contrib/instrumentation/runtime v0.18.0 h1:jR/LN3VhLVDJocVofmyWaMIjKViE3Fd7rkVf4J23Zps=
+go.opentelemetry.io/contrib/instrumentation/runtime v0.18.0/go.mod h1:G836dpLZVQdc1xwDiaglbI7ehCCvfCv51NGYNkbp8Uc=
 go.opentelemetry.io/otel v0.18.0 h1:d5Of7+Zw4ANFOJB+TIn2K3QWsgS2Ht7OU9DqZHI6qu8=
 go.opentelemetry.io/otel v0.18.0/go.mod h1:PT5zQj4lTsR1YeARt8YNKcFb88/c2IKoSABK9mX0r78=
 go.opentelemetry.io/otel/exporters/metric/prometheus v0.18.0 h1:bSRjFukkFjoLMKikODjMZcD0Nn9x1tJ3Jfqzvj3Holk=
