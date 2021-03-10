@@ -3,6 +3,16 @@ entries:
   otel-demo-backend:
   - apiVersion: v2
     appVersion: 0.1.9
+    created: "2021-03-10T18:46:16.835708386Z"
+    description: A Helm chart for OTEL Demo Backend.
+    digest: 9de059ff772b7cbacb6533dd7d4817483b2bf6559bb56cfc11ce1c496b9715a6
+    name: otel-demo-backend
+    type: application
+    urls:
+    - https://github.com/jtyr/otel-demo/releases/download/otel-demo-backend-0.1.8/otel-demo-backend-0.1.8.tgz
+    version: 0.1.8
+  - apiVersion: v2
+    appVersion: 0.1.9
     created: "2021-03-10T18:41:42.236458232Z"
     description: A Helm chart for OTEL Demo Backend.
     digest: 7adfaf7aa6fa8f5ee24878b387a1a70cd4a2cad5e619c3422e569ad598e45ab2
@@ -52,6 +62,16 @@ entries:
     - https://github.com/jtyr/otel-demo/releases/download/otel-demo-backend-0.1.2/otel-demo-backend-0.1.2.tgz
     version: 0.1.2
   otel-demo-frontend:
+  - apiVersion: v2
+    appVersion: 0.1.10
+    created: "2021-03-10T18:46:16.905857469Z"
+    description: A Helm chart for OTEL Demo Frontend.
+    digest: 5545c44c0adf5c80a8cbb75f08fa3baa5e92ce3538ffe8915f104377725e7241
+    name: otel-demo-frontend
+    type: application
+    urls:
+    - https://github.com/jtyr/otel-demo/releases/download/otel-demo-frontend-0.1.9/otel-demo-frontend-0.1.9.tgz
+    version: 0.1.9
   - apiVersion: v2
     appVersion: 0.1.10
     created: "2021-03-10T18:41:42.309433162Z"
