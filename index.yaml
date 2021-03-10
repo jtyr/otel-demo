@@ -64,6 +64,16 @@ entries:
   otel-demo-frontend:
   - apiVersion: v2
     appVersion: 0.1.10
+    created: "2021-03-10T19:27:39.571720712Z"
+    description: A Helm chart for OTEL Demo Frontend.
+    digest: cdef507b336a0d2ab107e9961caf978460d082b0c2e4b9e2fb291d73f7adf323
+    name: otel-demo-frontend
+    type: application
+    urls:
+    - https://github.com/jtyr/otel-demo/releases/download/otel-demo-frontend-0.1.10/otel-demo-frontend-0.1.10.tgz
+    version: 0.1.10
+  - apiVersion: v2
+    appVersion: 0.1.10
     created: "2021-03-10T18:46:16.905857469Z"
     description: A Helm chart for OTEL Demo Frontend.
     digest: 5545c44c0adf5c80a8cbb75f08fa3baa5e92ce3538ffe8915f104377725e7241
