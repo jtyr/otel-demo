@@ -170,6 +170,7 @@ Test the app:
 Query logs from command line:
 
 ```shell
+export LOKI_ADDR=http://loki.localhost
 logcli query -t '{namespace="otel-demo", instance=~"otel-demo-.*"}'
 ```
 
