@@ -3,6 +3,7 @@ module github.com/jtyr/otel-demo
 go 1.16
 
 require (
+	github.com/go-kit/kit v0.10.0
 	github.com/google/uuid v1.1.2
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.18.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.18.0

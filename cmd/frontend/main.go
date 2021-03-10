@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptrace"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/google/uuid"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
@@ -40,7 +42,18 @@ var (
 		attribute.String("svc", serviceName)}
 	reqCounter metric.Float64Counter
 	errCounter metric.Float64Counter
+	logger log.Logger
 )
+
+// initLogger creates new logger used throughout the application.
+func initLogger() {
+	logger = log.NewLogfmtLogger(os.Stderr)
+	logger = log.With(
+		logger,
+		"ts", log.DefaultTimestampUTC,
+		"app", appName,
+		"service", serviceName)
+}
 
 // initTracer creates a new trace provider instance and registers it as global trace provider.
 func initTracer() func() {
@@ -62,7 +75,10 @@ func initTracer() func() {
 		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
 	)
 	if err != nil {
-		log.Fatal(err)
+		level.Error(logger).Log(
+			"msg", "cannot create tracer",
+			"err", err)
+		os.Exit(1)
 	}
 
 	otel.SetTextMapPropagator(
@@ -76,7 +92,10 @@ func initTracer() func() {
 func initMeter() (*prometheus.Exporter) {
 	exporter, err := prometheus.InstallNewPipeline(prometheus.Config{})
 	if err != nil {
-		log.Panicf("failed to initialize prometheus exporter %v", err)
+		level.Error(logger).Log(
+			"msg", "failed to initialize Prometheus exporter",
+			"err", err)
+		os.Exit(1)
 	}
 
 	meter := global.Meter(meterName)
@@ -98,6 +117,9 @@ func initMeter() (*prometheus.Exporter) {
 }
 
 func mainHandler(w http.ResponseWriter, req *http.Request) {
+	// Measure duration
+	start := time.Now()
+
 	// Standard header
 	w.Header().Add("Content-Type", "text/html")
 
@@ -109,6 +131,9 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 			Name: "session_id",
 			Value: uuid.New().String(),
 		}
+		level.Info(logger).Log(
+			"msg", "new session created",
+			"sessionId", sessionId)
 		http.SetCookie(w, sessionId)
 	}
 
@@ -146,11 +171,6 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 			trace.WithAttributes(semconv.PeerServiceKey.String("backend")))
 		defer span.End()
 
-		log.Printf(
-			"Handler: trace_id=%s; span_id=%s\n",
-			span.SpanContext().TraceID,
-			span.SpanContext().SpanID)
-
 		ctx = httptrace.WithClientTrace(ctx, otelhttptrace.NewClientTrace(ctx))
 		req, _ := http.NewRequestWithContext(ctx, "GET", backendEndpoint, nil)
 
@@ -159,6 +179,7 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 		if err == nil {
 			body, err = ioutil.ReadAll(res.Body)
 			_ = res.Body.Close()
+
 		} else {
 			// Show error in the span
 			span.AddEvent(
@@ -170,11 +191,24 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 			errCounter.Add(ctx, float64(1), commonLabels...)
 		}
 
+		duration := time.Since(start)
+
+		level.Info(logger).Log(
+			"sessionId", sessionId.Value,
+			"traceID", span.SpanContext().TraceID,
+			"spanID", span.SpanContext().SpanID,
+			"duration", duration)
+
 		return err
 	}(ctx)
 
 	if err != nil {
-		log.Printf("ERROR: Cannot connect to the backend %s", backendEndpoint)
+		level.Error(logger).Log(
+			"sessionId", sessionId.Value,
+			"msg", "cannot connect to the backend",
+			"err", err)
+
+		// HTML output
 		fmt.Fprintf(w, "Hello world from the %s\n", serviceName)
 	} else {
 		fmt.Fprint(w, string(body))
@@ -182,24 +216,34 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	// Init logger
+	initLogger()
+
+	// Init tracer
 	flush := initTracer()
 	defer flush()
 
+	// Init meter
 	meter := initMeter()
 
+	// Setup HTTP server
 	listen := os.Getenv("FRONTEND_LISTEN")
 
 	if listen == "" {
 		listen = "localhost:8080"
 	}
 
-	log.Printf("%s listening on %s\n", strings.Title(serviceName), listen)
+	level.Info(logger).Log(
+		"msg", fmt.Sprintf("%s listening on %s", strings.Title(serviceName), listen))
 
 	http.HandleFunc("/", mainHandler)
 	http.HandleFunc("/metrics", meter.ServeHTTP)
 
 	err := http.ListenAndServe(listen, nil)
 	if err != nil {
-		panic(err)
+		level.Error(logger).Log(
+			"msg", "cannot create HTTP server",
+			"err", err)
+		os.Exit(1)
 	}
 }

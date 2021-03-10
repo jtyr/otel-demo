@@ -3,4 +3,4 @@ name: otel-demo-backend
 description: A Helm chart for OTEL Demo Backend.
 type: application
 version: 0.1.1
-appVersion: 0.1.3
+appVersion: 0.1.4

@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -35,7 +39,18 @@ var (
 		attribute.String("svc", serviceName)}
 	reqCounter metric.Float64Counter
 	errCounter metric.Float64Counter
+	logger log.Logger
 )
+
+// initLogger creates new logger used throughout the application.
+func initLogger() {
+	logger = log.NewLogfmtLogger(os.Stderr)
+	logger = log.With(
+		logger,
+		"ts", log.DefaultTimestampUTC,
+		"app", appName,
+		"service", serviceName)
+}
 
 // initTracer creates a new trace provider instance and registers it as global trace provider.
 func initTracer() func() {
@@ -57,7 +72,10 @@ func initTracer() func() {
 		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
 	)
 	if err != nil {
-		log.Fatal(err)
+		level.Error(logger).Log(
+			"msg", "cannot create tracer",
+			"err", err)
+		os.Exit(1)
 	}
 
 	otel.SetTextMapPropagator(
@@ -71,7 +89,10 @@ func initTracer() func() {
 func initMeter() (*prometheus.Exporter) {
 	exporter, err := prometheus.InstallNewPipeline(prometheus.Config{})
 	if err != nil {
-		log.Panicf("failed to initialize prometheus exporter %v", err)
+		level.Error(logger).Log(
+			"msg", "failed to initialize Prometheus exporter",
+			"err", err)
+		os.Exit(1)
 	}
 
 	meter := global.Meter(meterName)
@@ -111,11 +132,13 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 		"handling session_id",
 		trace.WithAttributes(sId.String(sessionId.AsString())))
 
-	log.Printf(
-		"Handler: trace_id=%s; span_id=%s\n",
-		span.SpanContext().TraceID,
-		span.SpanContext().SpanID)
-	log.Printf("Session ID: %s", sessionId.AsString())
+	// Simulate slow response
+	time.Sleep(time.Duration(rand.ExpFloat64()) * time.Millisecond)
+
+	level.Info(logger).Log(
+		"sessionId", sessionId,
+		"traceID", span.SpanContext().TraceID,
+		"spanID", span.SpanContext().SpanID)
 
 	// Record request metric
 	reqCounter.Add(ctx, float64(1), commonLabels...)
@@ -125,18 +148,28 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	// Init random generator
+	rand.Seed(time.Now().UnixNano())
+
+	// Init logger
+	initLogger()
+
+	// Setup tracer
 	flush := initTracer()
 	defer flush()
 
+	// Setup meter
 	meter := initMeter()
 
+	// Setup HTTP server
 	listen := os.Getenv("BACKEND_LISTEN")
 
 	if listen == "" {
 		listen = "localhost:8888"
 	}
 
-	log.Printf("%s listening on %s\n", strings.Title(serviceName), listen)
+	level.Info(logger).Log(
+		"msg", fmt.Sprintf("%s listening on %s", strings.Title(serviceName), listen))
 
 	otelHandler := otelhttp.NewHandler(
 		http.HandlerFunc(mainHandler),
@@ -147,6 +180,9 @@ func main() {
 
 	err := http.ListenAndServe(listen, nil)
 	if err != nil {
-		panic(err)
+		level.Error(logger).Log(
+			"msg", "cannot create HTTP server",
+			"err", err)
+		os.Exit(1)
 	}
 }
