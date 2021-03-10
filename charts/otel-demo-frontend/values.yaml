@@ -78,7 +78,9 @@ service:
   targetPort: *container_port
   # If empty, Kubernetes will choose one for us
   port: &clusterPort 80
-  labels: {}
+  labels:
+    app: >-
+      {{ include "this.fullname" . }}
   annotations: {}
 
 

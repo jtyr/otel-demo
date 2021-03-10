@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "this.labels" . | nindent 4 }}
     {{- if .Values.service.labels }}{{ "\n" }}
-      {{- toYaml .Values.service.labels | indent 4 }}
+      {{- tpl (toYaml .Values.service.labels | indent 4) . }}
     {{- end }}
   {{- if .Values.service.annotations }}
   annotations:
