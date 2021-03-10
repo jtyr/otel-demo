@@ -19,14 +19,15 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/trace/jaeger"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/baggage"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/metric/prometheus"
+	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -151,6 +152,11 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 	time.Sleep(duration)
 
 	if maxResponseDuration > 0 * time.Millisecond && duration > maxResponseDuration {
+		msg := "response is taking too long"
+
+		// Set the span status
+		span.SetStatus(codes.Error, msg)
+
 		// Record error metric
 		errCounter.Add(ctx, float64(1), commonLabels...)
 
@@ -159,7 +165,7 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 			"traceID", span.SpanContext().TraceID,
 			"spanID", span.SpanContext().SpanID,
 			"duration", duration,
-			"msg", "response is taking too long")
+			"msg", msg)
 
 		// Return 408
 		w.WriteHeader(http.StatusRequestTimeout)

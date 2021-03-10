@@ -19,14 +19,15 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/trace/jaeger"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/baggage"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/metric/prometheus"
+	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/semconv"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -202,28 +203,38 @@ func mainHandler(w http.ResponseWriter, req *http.Request) {
 					"spanID", span.SpanContext().SpanID,
 					"duration", duration)
 			} else {
+				msg := "received wrong status code from the backend"
+
+				// Set the span status
+				span.SetStatus(codes.Ok, msg)
+
 				level.Warn(logger).Log(
 					"sessionId", sessionId,
 					"traceID", span.SpanContext().TraceID,
 					"spanID", span.SpanContext().SpanID,
 					"duration", duration,
-					"msg", "received wrong status code from the backend",
+					"msg", msg,
 					"code", res.StatusCode)
 
 				problem = true
 			}
 		} else {
+			msg := "backend connection error"
+
 			level.Error(logger).Log(
 				"sessionId", sessionId,
 				"traceID", span.SpanContext().TraceID,
 				"spanID", span.SpanContext().SpanID,
 				"duration", duration,
-				"msg", "backend connection error",
+				"msg", msg,
 				"err", err)
+
+			// Set the span status
+			span.SetStatus(codes.Error, msg)
 
 			// Show error in the span
 			span.AddEvent(
-				"backend connection error",
+				msg,
 				trace.WithAttributes(
 					attribute.Key("error").String(err.Error())))
 
