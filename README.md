@@ -121,8 +121,6 @@ Install [Grafana Tempo](https://grafana.com/oss/tempo/):
 
 ```shell
 helm upgrade --create-namespace --namespace grafanalabs --install tempo grafana/tempo
-# Patch tempo to have Jaeger HTTP port available for writes
-kubectl patch sts tempo --type json --patch '[{"op": "add", "path": "/spec/template/spec/containers/0/ports/-", "value": {"containerPort": 14268, "name": "jaeger-http"}}]'
 ```
 
 Install [Grafana Loki](https://grafana.com/oss/loki/):
