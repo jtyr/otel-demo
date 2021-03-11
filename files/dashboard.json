@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 1,
-  "iteration": 1615404964623,
+  "iteration": 1615464479725,
   "links": [],
   "panels": [
     {
@@ -59,7 +59,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 3,
+        "w": 4,
         "x": 0,
         "y": 1
       },
@@ -119,8 +119,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 3,
-        "x": 3,
+        "w": 4,
+        "x": 4,
         "y": 1
       },
       "id": 14,
@@ -148,7 +148,7 @@
           "refId": "A"
         }
       ],
-      "title": "Memory used",
+      "title": "Average memory usage",
       "type": "stat"
     },
     {
@@ -434,7 +434,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
+          "selected": true,
           "text": "otel-demo-frontend",
           "value": "otel-demo-frontend"
         },
@@ -472,5 +472,5 @@
   "timezone": "",
   "title": "OTEL Demo",
   "uid": "otel-demo",
-  "version": 1
+  "version": 2
 }
