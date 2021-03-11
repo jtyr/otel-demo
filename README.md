@@ -142,7 +142,10 @@ Install [Grafana
 Promtail](https://grafana.com/docs/loki/latest/clients/promtail/):
 
 ```shell
-helm upgrade --create-namespace --namespace grafanalabs --install promtail grafana/promtail
+cat <<END | helm upgrade --create-namespace --namespace grafanalabs --values - --install promtail grafana/promtail
+config:
+  lokiAddress: http://loki:3100/loki/api/v1/push
+END
 ```
 
 Install [Fluent Bit](https://fluentbit.io):
