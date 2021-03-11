@@ -45,6 +45,7 @@ var (
 	reqCounter metric.Float64Counter
 	errCounter metric.Float64Counter
 	logger log.Logger
+	build string
 )
 
 // initLogger creates new logger used throughout the application.
@@ -54,6 +55,7 @@ func initLogger() {
 		logger,
 		"t", log.DefaultTimestampUTC,
 		"app", appName,
+		"build", build,
 		"service", serviceName)
 }
 

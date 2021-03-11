@@ -45,6 +45,7 @@ var (
 	errCounter metric.Float64Counter
 	logger log.Logger
 	maxResponseDuration time.Duration = 5 * time.Millisecond
+	build string
 )
 
 // initLogger creates new logger used throughout the application.
@@ -54,6 +55,7 @@ func initLogger() {
 		logger,
 		"t", log.DefaultTimestampUTC,
 		"app", appName,
+		"build", build,
 		"service", serviceName)
 }
 
