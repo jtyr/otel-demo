@@ -48,7 +48,7 @@ helm repo add otel-demo https://jtyr.github.io/otel-demo
 helm repo update
 ```
 
-Install [Prometheus Operator Stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack):
+Install [Kube Prometheus Stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack):
 
 ```shell
 cat <<END | helm upgrade --create-namespace --namespace prometheus --values - --install kps prometheus-community/kube-prometheus-stack
