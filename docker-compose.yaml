@@ -3,13 +3,13 @@ version: "3.8"
 services:
   tempo:
     image: grafana/tempo:latest
-    command: -config.file=/etc/tempo-local.yaml
+    command: -config.file=/etc/tempo.yaml
     ports:
       - "14268:14268"
     volumes:
       - type: bind
-        source: ./files/tempo-local.yaml
-        target: /etc/tempo-local.yaml
+        source: ./files/tempo.yaml
+        target: /etc/tempo.yaml
     networks:
       - oteldemo
 
