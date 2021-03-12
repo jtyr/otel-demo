@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 1,
-  "iteration": 1615464479725,
+  "iteration": 1615543757493,
   "links": [],
   "panels": [
     {
@@ -421,7 +421,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Panel Title",
+      "title": "Service logs",
       "type": "logs"
     }
   ],
@@ -434,7 +434,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "otel-demo-frontend",
           "value": "otel-demo-frontend"
         },
@@ -472,5 +472,5 @@
   "timezone": "",
   "title": "OTEL Demo",
   "uid": "otel-demo",
-  "version": 2
+  "version": 3
 }
