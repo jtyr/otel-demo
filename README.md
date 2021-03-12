@@ -87,6 +87,7 @@ datasources:
         url: http://kps-prometheus.prometheus:9090
         access: proxy
         isDefault: true
+        editable: true
       - name: Loki
         uid: loki
         type: loki
@@ -98,11 +99,13 @@ datasources:
               matcherRegex: "traceID=(\\\\w+)"
               url: "\$\${__value.raw}"
               datasourceUid: tempo
+        editable: true
       - name: Tempo
         uid: tempo
         type: tempo
         url: http://tempo:16686
         access: proxy
+        editable: true
 dashboardProviders:
   dashboardproviders.yaml:
     apiVersion: 1
