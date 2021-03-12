@@ -205,6 +205,12 @@ kubectl run curl \
 ```
 
 
+License
+-------
+
+MIT
+
+
 Author
 ------
 
