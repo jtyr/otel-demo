@@ -123,10 +123,7 @@ END
 Install [Grafana Tempo](https://grafana.com/oss/tempo/):
 
 ```shell
-cat <<END | helm upgrade --create-namespace --namespace grafanalabs --values - --install tempo grafana/tempo
-tempoQuery:
-  tag: 0.6.0
-END
+helm upgrade --create-namespace --namespace grafanalabs --install tempo grafana/tempo
 ```
 
 Install [Grafana Loki](https://grafana.com/oss/loki/):
