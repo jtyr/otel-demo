@@ -5,10 +5,23 @@ This is a demo of how to use [Open Telemetry](https://opentelemetry.io/) (OTEL)
 instrumentation for traces and metrics.
 
 
+Table of contents
+-----------------
+
+- [Usage](#usage)
+  - [Docker Compose](#docker-compose)
+  - [Kubernetes](#kubernetes)
+    - [Manual installation](#manual-installation)
+    - [Automated installation](#automated-installation)
+    - [Testing of the app](#testing-of-the-app)
+- [License](#license)
+- [Author](#author)
+
+
 Usage
 -----
 
-### Docker compose
+### Docker Compose
 
 Run Grafana Tempo, Grafana Tempo Web UI and the App frontend/backed via Docker
 Compose:
@@ -196,26 +209,13 @@ server:
 END
 ```
 
-Create Argo CD project:
-
-```shell
-kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/project.yaml
-```
-
 Deploy all the applications:
 
 ```shell
-kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/ksp.yaml
-kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/grafana.yaml
-kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/tempo.yaml
-kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/loki.yaml
-kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/promtail.yaml
-kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/fluent-bit.yaml
-kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/otel-demo-backend.yaml
-kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/otel-demo-frontend.yaml
+kubectl apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/otel-demo-github.yaml
 ```
 
-Open [Argo CD server](http://argo-cd.local) in the web browser and watch how all is installed.
+Open [Argo CD server](http://argo-cd.localhost) in the web browser and watch how all is installed.
 
 
 #### Testing of the app

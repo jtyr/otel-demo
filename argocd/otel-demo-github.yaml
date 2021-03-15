@@ -4,7 +4,7 @@ metadata:
   name: otel-demo-github
   namespace: argocd
 spec:
-  project: otel-demo
+  project: default
   source:
     repoURL: https://github.com/jtyr/otel-demo.git
     targetRevision: HEAD
