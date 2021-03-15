@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki
+  namespace: argocd
+spec:
+  project: otel-demo
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: loki
+    targetRevision: "*"
+    helm:
+      values: |
+        tracing:
+          jaegerAgentHost: tempo
+        ingress:
+          enabled: true
+          hosts:
+            - host: loki.localhost
+              paths:
+                - /
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: grafanalabs
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

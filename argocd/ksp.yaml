@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kps
+  namespace: argocd
+spec:
+  project: otel-demo
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: "*"
+    helm:
+      values: |
+        fullnameOverride: kps
+        prometheus:
+          ingress:
+            enabled: true
+            hosts:
+              - prometheus.localhost
+        alertmanager:
+          ingress:
+            enabled: true
+            hosts:
+              - alertmanager.localhost
+        grafana:
+          enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prometheus
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

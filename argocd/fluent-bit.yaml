@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fluent-bit
+  namespace: argocd
+spec:
+  project: otel-demo
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: fluent-bit
+    targetRevision: "*"
+    helm:
+      values: |
+        loki:
+          serviceName: loki.grafanalabs
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: grafanalabs
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

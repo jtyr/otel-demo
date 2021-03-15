@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: otel-demo-frontend
+  namespace: argocd
+spec:
+  project: otel-demo
+  source:
+    repoURL: https://jtyr.github.io/otel-demo
+    chart: otel-demo-frontend
+    targetRevision: "*"
+    helm:
+      values: |
+        replicaCount: 3
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: otel-demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

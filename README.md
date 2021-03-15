@@ -39,6 +39,8 @@ export KUBECONFIG=~/.kube/kind_test1
 k3d cluster create test1 -p '80:80@loadbalancer' -p '443:443@loadbalancer'
 ```
 
+#### Manual installation
+
 Add all required [Helm](https://helm.sh) repos:
 
 ```shell
@@ -167,7 +169,58 @@ helm upgrade --create-namespace --namespace otel-demo --install otel-demo-backen
 helm upgrade --create-namespace --namespace otel-demo --install otel-demo-frontend otel-demo/otel-demo-frontend
 ```
 
-Test the app:
+#### Automated installation
+
+The above instruction, of how to install all the application onto a Kubernetes
+cluster, can be automatically managed by [Argo
+CD](https://argoproj.github.io/argo-cd/).
+
+First install the Argo CD:
+
+```shell
+cat <<END | helm upgrade --create-namespace --namespace argocd --values - --install argo-cd argo/argo-cd
+fullnameOverride: argocd
+configs:
+  secret:
+    # Password: admin
+    argocdServerAdminPassword: \$2a\$10\$0/WMVu9LJUnTioI.748IxOFhhRX8rXR2OVzSJIsXPdAM8mOLfum1q
+server:
+  config:
+    url: https://argo-cd.localhost
+  extraArgs:
+    - --insecure
+  ingress:
+    enabled: true
+    hosts:
+      - argo-cd.localhost
+END
+```
+
+Create Argo CD project:
+
+```shell
+kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/project.yaml
+```
+
+Deploy all the applications:
+
+```shell
+kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/ksp.yaml
+kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/grafana.yaml
+kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/tempo.yaml
+kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/loki.yaml
+kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/promtail.yaml
+kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/fluent-bit.yaml
+kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/otel-demo-backend.yaml
+kubect apply -f https://raw.githubusercontent.com/jtyr/otel-demo/master/argocd/otel-demo-frontend.yaml
+```
+
+Open [Argo CD server](http://argo-cd.local) in the web browser and watch how all is installed.
+
+
+#### Testing of the app
+
+Open via web browser:
 
 - [Grafana dashboard](http://grafana.localhost/d/otel-demo/otel-demo)
 - [OTEL Demo - frontend](http://otel-demo-frontend.localhost)

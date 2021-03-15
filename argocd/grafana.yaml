@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana
+  namespace: argocd
+spec:
+  project: otel-demo
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: grafana
+    targetRevision: "*"
+    helm:
+      values: |
+        adminPassword: admin
+        ingress:
+          enabled: true
+          hosts:
+            - grafana.localhost
+        datasources:
+          datasources.yaml:
+            apiVersion: 1
+            datasources:
+              - name: Prometheus
+                uid: prometheus
+                type: prometheus
+                url: http://kps-prometheus.prometheus:9090
+                access: proxy
+                isDefault: true
+                editable: true
+              - name: Loki
+                uid: loki
+                type: loki
+                url: http://loki:3100
+                access: proxy
+                jsonData:
+                  derivedFields:
+                    - name: "traceID"
+                      matcherRegex: "traceID=(\\w+)"
+                      url: "$${__value.raw}"
+                      datasourceUid: tempo
+                editable: true
+              - name: Tempo
+                uid: tempo
+                type: tempo
+                url: http://tempo:16686
+                access: proxy
+                editable: true
+        dashboardProviders:
+          dashboardproviders.yaml:
+            apiVersion: 1
+            providers:
+              - name: default
+                options:
+                  path: /var/lib/grafana/dashboards/default
+        dashboards:
+          default:
+            local-dashboard:
+              url: https://raw.githubusercontent.com/jtyr/otel-demo/master/files/dashboard.json
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: grafanalabs
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
