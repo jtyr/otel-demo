@@ -50,7 +50,7 @@ spec:
             {{- end }}
           {{- end }}
           ports:
-            - name: http
+            - name: http-metrics
               containerPort: {{ .Values.port }}
               protocol: TCP
           readinessProbe:

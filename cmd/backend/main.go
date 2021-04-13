@@ -14,6 +14,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 
+	"go.opentelemetry.io/contrib/instrumentation/host"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
@@ -121,6 +122,14 @@ func initMeter() (*prometheus.Exporter) {
 	if err = runtime.Start(); err != nil {
 		level.Error(logger).Log(
 			"msg", "failed to initialize runtime metrics collection",
+			"err", err)
+		os.Exit(1)
+	}
+
+	// Start collecting host metrics
+	if err = host.Start(); err != nil {
+		level.Error(logger).Log(
+			"msg", "failed to initialize host metrics collection",
 			"err", err)
 		os.Exit(1)
 	}
@@ -245,13 +254,17 @@ func main() {
 	level.Info(logger).Log(
 		"msg", fmt.Sprintf("%s listening on %s", strings.Title(serviceName), listen))
 
-	otelHandler := otelhttp.NewHandler(
+	mainHandler := otelhttp.NewHandler(
 		http.HandlerFunc(mainHandler),
-		"main-handler")
+		"api-main")
+	generatorHandler := otelhttp.NewHandler(
+		http.HandlerFunc(errorGeneratorHandler),
+		"api-fratures-errorGenerator")
+	metricsHandler := otelhttp.NewHandler(meter, "metrics")
 
-	http.Handle("/api/main", otelHandler)
-	http.HandleFunc("/api/features/errorGenerator", errorGeneratorHandler)
-	http.HandleFunc("/metrics", meter.ServeHTTP)
+	http.Handle("/api/main", mainHandler)
+	http.Handle("/api/features/errorGenerator", generatorHandler)
+	http.Handle("/metrics", metricsHandler)
 
 	err := http.ListenAndServe(listen, nil)
 	if err != nil {
